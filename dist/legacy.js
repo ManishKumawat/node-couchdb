@@ -311,13 +311,47 @@ var NodeCouchDB = function () {
                 method: 'POST',
                 url: this._baseUrl + '/' + dbName,
                 body: data
-            }).then(function (_ref6) {
-                var res = _ref6.res,
-                    body = _ref6.body;
+            }).then(function (_ref7) {
+                var res = _ref7.res,
+                    body = _ref7.body;
 
                 _this4._checkDocumentManipulationStatus(res.statusCode, body);
 
                 if (res.statusCode !== 201 && res.statusCode !== 202) {
+                    throw new RequestError('EUNKNOWN', 'Unexpected status code while inserting document into the database: ' + res.statusCode, body);
+                }
+
+                return {
+                    data: body,
+                    headers: res.headers,
+                    status: res.statusCode
+                };
+            });
+        }
+
+        /**
+         * Insert index into CouchDB. Returns a promise which is
+         * @param dbName : Name of database where index will be created
+         * @param data : index parameters
+         * @returns {Promise<{headers: *, data: *, status: *}>}
+         */
+
+    }, {
+        key: 'insertIndex',
+        value: function insertIndex(dbName, data) {
+            var _this5 = this;
+
+            return this._requestWrapped({
+                method: 'POST',
+                url: this._baseUrl + '/' + dbName + '/_index',
+                body: data
+            }).then(function (_ref6) {
+                var res = _ref6.res,
+                    body = _ref6.body;
+
+                _this5._checkDocumentManipulationStatus(res.statusCode, body);
+
+                if (res.statusCode !== 200 && res.statusCode !== 201) {
                     throw new RequestError('EUNKNOWN', 'Unexpected status code while inserting document into the database: ' + res.statusCode, body);
                 }
 
@@ -352,9 +386,9 @@ var NodeCouchDB = function () {
                     rev: docRevision
                 },
                 body: body
-            }).then(function (_ref7) {
-                var res = _ref7.res,
-                    body = _ref7.body;
+            }).then(function (_ref8) {
+                var res = _ref8.res,
+                    body = _ref8.body;
 
                 if (res.statusCode === 409) {
                     throw new RequestError('EDOCCONFLICT', 'Document insert conflict - Document’s revision wasn’t specified or it’s not the latest', body);
@@ -381,7 +415,7 @@ var NodeCouchDB = function () {
     }, {
         key: 'update',
         value: function update(dbName, data) {
-            var _this5 = this;
+            var _this6 = this;
 
             if (!data._id || !data._rev) {
                 var err = new Error('Both _id and _rev fields should exist when updating the document');
@@ -394,11 +428,11 @@ var NodeCouchDB = function () {
                 method: 'PUT',
                 url: this._baseUrl + '/' + dbName + '/' + encodeURIComponent(data._id),
                 body: data
-            }).then(function (_ref8) {
-                var res = _ref8.res,
-                    body = _ref8.body;
+            }).then(function (_ref9) {
+                var res = _ref9.res,
+                    body = _ref9.body;
 
-                _this5._checkDocumentManipulationStatus(res.statusCode, body);
+                _this6._checkDocumentManipulationStatus(res.statusCode, body);
 
                 if (!(res.statusCode >= 200 && res.statusCode <= 202)) {
                     throw new RequestError('EUNKNOWN', 'Unexpected status code while inserting document into the database: ' + res.statusCode, body);
@@ -426,7 +460,7 @@ var NodeCouchDB = function () {
     }, {
         key: 'del',
         value: function del(dbName, docId, docRevision) {
-            var _this6 = this;
+            var _this7 = this;
 
             return this._requestWrapped({
                 method: 'DELETE',
@@ -434,11 +468,11 @@ var NodeCouchDB = function () {
                 qs: {
                     rev: docRevision
                 }
-            }).then(function (_ref9) {
-                var res = _ref9.res,
-                    body = _ref9.body;
+            }).then(function (_ref10) {
+                var res = _ref10.res,
+                    body = _ref10.body;
 
-                _this6._checkDocumentManipulationStatus(res.statusCode, body);
+                _this7._checkDocumentManipulationStatus(res.statusCode, body);
 
                 if (res.statusCode !== 200) {
                     throw new RequestError('EUNKNOWN', 'Unexpected status code while deleting document: ' + res.statusCode, body);
@@ -466,7 +500,7 @@ var NodeCouchDB = function () {
     }, {
         key: 'mango',
         value: function mango(dbName, mangoQuery) {
-            var _this7 = this;
+            var _this8 = this;
 
             var query = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
@@ -495,11 +529,11 @@ var NodeCouchDB = function () {
                 qs: query
             };
 
-            return this._requestWrapped(requestOpts).then(function (_ref10) {
-                var res = _ref10.res,
-                    body = _ref10.body;
+            return this._requestWrapped(requestOpts).then(function (_ref11) {
+                var res = _ref11.res,
+                    body = _ref11.body;
 
-                _this7._checkServerVersion(res.headers.server, 2);
+                _this8._checkServerVersion(res.headers.server, 2);
 
                 if (res.statusCode === 404) {
                     throw new RequestError('EDOCMISSING', 'Document is not found', body);
@@ -538,9 +572,9 @@ var NodeCouchDB = function () {
                 qs: {
                     rev: docRevision
                 }
-            }).then(function (_ref11) {
-                var res = _ref11.res,
-                    body = _ref11.body;
+            }).then(function (_ref12) {
+                var res = _ref12.res,
+                    body = _ref12.body;
 
                 if (res.statusCode === 404) {
                     throw new RequestError('EDOCMISSING', 'Attachment is not found', body);
@@ -589,9 +623,9 @@ var NodeCouchDB = function () {
                 method: method,
                 url: url,
                 qs: queryString
-            }).then(function (_ref12) {
-                var res = _ref12.res,
-                    body = _ref12.body;
+            }).then(function (_ref13) {
+                var res = _ref13.res,
+                    body = _ref13.body;
 
                 if (res.statusCode === 404) {
                     throw new RequestError('EDOCMISSING', 'Design document is not found', body);
@@ -626,8 +660,8 @@ var NodeCouchDB = function () {
             return this._requestWrapped({
                 url: this._baseUrl + '/_uuids',
                 qs: { count: count }
-            }).then(function (_ref13) {
-                var body = _ref13.body;
+            }).then(function (_ref14) {
+                var body = _ref14.body;
 
                 return body.uuids;
             });
@@ -671,7 +705,7 @@ var NodeCouchDB = function () {
     }, {
         key: '_requestWrapped',
         value: function _requestWrapped(opts) {
-            var _this8 = this;
+            var _this9 = this;
 
             if (typeof opts === 'string') {
                 opts = { url: opts };
@@ -682,9 +716,9 @@ var NodeCouchDB = function () {
 
             return whenCacheChecked.then(function (cache) {
                 // cache plugin returns null if record doesn't exist
-                var _ref14 = cache || {},
-                    etag = _ref14.etag,
-                    cacheBody = _ref14.body;
+                var _ref15 = cache || {},
+                    etag = _ref15.etag,
+                    cacheBody = _ref15.body;
 
                 return new Promise(function (resolve, reject) {
                     if (etag) {
@@ -692,7 +726,7 @@ var NodeCouchDB = function () {
                         opts.headers['if-none-match'] = etag;
                     }
 
-                    _this8._requestWrappedDefaults(opts, function (err, res, body) {
+                    _this9._requestWrappedDefaults(opts, function (err, res, body) {
                         if (err) {
                             reject(err);
                         } else {

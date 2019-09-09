@@ -264,13 +264,42 @@ class NodeCouchDB {
             method: 'POST',
             url: `${this._baseUrl}/${dbName}`,
             body: data
-        }).then((_ref6) => {
+        }).then((_ref7) => {
+            let res = _ref7.res,
+                body = _ref7.body;
+
+            this._checkDocumentManipulationStatus(res.statusCode, body);
+
+            if (res.statusCode !== 201 && res.statusCode !== 202) {
+                throw new RequestError('EUNKNOWN', `Unexpected status code while inserting document into the database: ${res.statusCode}`, body);
+            }
+
+            return {
+                data: body,
+                headers: res.headers,
+                status: res.statusCode
+            };
+        });
+    }
+
+    /**
+     * Insert index into CouchDB. Returns a promise which is
+     * @param dbName : Name of database where index will be created
+     * @param data : index parameters
+     * @returns {Promise<{headers: *, data: *, status: *}>}
+     */
+    insertIndex(dbName, data) {
+        return this._requestWrapped({
+            method: 'POST',
+            url: `${this._baseUrl}/${dbName}/_index`,
+            body: data
+        }).then(_ref6 => {
             let res = _ref6.res,
                 body = _ref6.body;
 
             this._checkDocumentManipulationStatus(res.statusCode, body);
 
-            if (res.statusCode !== 201 && res.statusCode !== 202) {
+            if (res.statusCode !== 200 && res.statusCode !== 201) {
                 throw new RequestError('EUNKNOWN', `Unexpected status code while inserting document into the database: ${res.statusCode}`, body);
             }
 
@@ -302,9 +331,9 @@ class NodeCouchDB {
                 rev: docRevision
             },
             body: body
-        }).then((_ref7) => {
-            let res = _ref7.res,
-                body = _ref7.body;
+        }).then((_ref8) => {
+            let res = _ref8.res,
+                body = _ref8.body;
 
             if (res.statusCode === 409) {
                 throw new RequestError('EDOCCONFLICT', 'Document insert conflict - Document’s revision wasn’t specified or it’s not the latest', body);
@@ -339,9 +368,9 @@ class NodeCouchDB {
             method: 'PUT',
             url: `${this._baseUrl}/${dbName}/${encodeURIComponent(data._id)}`,
             body: data
-        }).then((_ref8) => {
-            let res = _ref8.res,
-                body = _ref8.body;
+        }).then((_ref9) => {
+            let res = _ref9.res,
+                body = _ref9.body;
 
             this._checkDocumentManipulationStatus(res.statusCode, body);
 
@@ -374,9 +403,9 @@ class NodeCouchDB {
             qs: {
                 rev: docRevision
             }
-        }).then((_ref9) => {
-            let res = _ref9.res,
-                body = _ref9.body;
+        }).then((_ref10) => {
+            let res = _ref10.res,
+                body = _ref10.body;
 
             this._checkDocumentManipulationStatus(res.statusCode, body);
 
@@ -430,9 +459,9 @@ class NodeCouchDB {
             qs: query
         };
 
-        return this._requestWrapped(requestOpts).then((_ref10) => {
-            let res = _ref10.res,
-                body = _ref10.body;
+        return this._requestWrapped(requestOpts).then((_ref11) => {
+            let res = _ref11.res,
+                body = _ref11.body;
 
             this._checkServerVersion(res.headers.server, 2);
 
@@ -470,9 +499,9 @@ class NodeCouchDB {
             qs: {
                 rev: docRevision
             }
-        }).then((_ref11) => {
-            let res = _ref11.res,
-                body = _ref11.body;
+        }).then((_ref12) => {
+            let res = _ref12.res,
+                body = _ref12.body;
 
             if (res.statusCode === 404) {
                 throw new RequestError('EDOCMISSING', 'Attachment is not found', body);
@@ -518,9 +547,9 @@ class NodeCouchDB {
             method: method,
             url: url,
             qs: queryString
-        }).then((_ref12) => {
-            let res = _ref12.res,
-                body = _ref12.body;
+        }).then((_ref13) => {
+            let res = _ref13.res,
+                body = _ref13.body;
 
             if (res.statusCode === 404) {
                 throw new RequestError('EDOCMISSING', 'Design document is not found', body);
@@ -552,8 +581,8 @@ class NodeCouchDB {
         return this._requestWrapped({
             url: `${this._baseUrl}/_uuids`,
             qs: { count }
-        }).then((_ref13) => {
-            let body = _ref13.body;
+        }).then((_ref14) => {
+            let body = _ref14.body;
 
             return body.uuids;
         });
@@ -600,10 +629,10 @@ class NodeCouchDB {
 
         return whenCacheChecked.then(cache => {
             // cache plugin returns null if record doesn't exist
-            var _ref14 = cache || {};
+            var _ref15 = cache || {};
 
-            const etag = _ref14.etag,
-                  cacheBody = _ref14.body;
+            const etag = _ref15.etag,
+                  cacheBody = _ref15.body;
 
 
             return new Promise((resolve, reject) => {
